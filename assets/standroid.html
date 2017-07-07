@@ -1,0 +1,55 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title>Luke's Desk</title>
+<link rel="stylesheet" type="text/css" href="static/standroid.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script type="text/javascript">
+
+    function showStatus(result) {
+        if(result.status == 409) $("#Status").html("Desk busy. Try again soon.");
+        else if(result.status == 400) $("#Status").html("Request failed. Invalid duration");
+        else $("#Status").html("Request failed. Server down?");
+        $("#spinnerBox").hide();
+        $("#Status").fadeIn();
+        setTimeout(function(){ $("#Status").fadeOut(); }, 5000);
+    }
+        
+    function handleClick(op, t) {
+        u = "/" + op + "/" + t;
+        $.ajax({url: u, error: showStatus});
+        $("#spinnerBox").show();
+        setTimeout(function(){ $("#spinnerBox").hide(); }, t*1000);
+    }
+        
+    $(document).ready(function() {
+        $("#WayUpButton").click(function () { handleClick("up", 5); });
+        $("#UpButton").click(function () { handleClick("up", 1); });
+        $("#DownButton").click(function () { handleClick("down", 1); });
+        $("#WayDownButton").click(function () { handleClick("down", 5); });
+    });
+
+</script>
+</head>
+<body>
+
+<div id="spinnerBox">
+<div class="spinner"></div>
+</div>
+
+<div id="centered">
+<div id="WayUpButton" class="Button">Way Up</div>
+<div id="UpButton" class="Button">Up</div>
+<div id="DownButton" class="Button">Down</div>
+<div id="WayDownButton" class="Button">Way Down</div>
+<div id="Status">Request failed.</div>
+</div>
+
+<a href="https://github.com/areid-lumerical/standroid">
+<img id="githublogo" src="static/github.png">
+<img id="logo" src="static/standroid.png">
+</a>
+
+</body>
+</html>
