@@ -1,2 +1,6 @@
 # standroid
-App to run on Raspberry Pi to control a stand-up desk from the web
+App to control a stand-up desk from the web. 
+
+Runs on Raspberry Pi with a 4 channel relay switch connected to the GPIO bus
+
+Requires the Python bottle module. Just run with ./python standroid.py
