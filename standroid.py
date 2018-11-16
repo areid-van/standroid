@@ -14,8 +14,6 @@ def moveUp(t):
     GPIO.output(5, 0)
     time.sleep(t)
     GPIO.setup(5, GPIO.IN)
-    global motionLock
-    motionLock.release()
 
 def moveDown(t):
     GPIO.setup(3, GPIO.OUT)
@@ -25,8 +23,6 @@ def moveDown(t):
     time.sleep(t)
     GPIO.setup(5, GPIO.IN)
     GPIO.setup(3, GPIO.IN)
-    global motionLock
-    motionLock.release()
     
 
 GPIO_TRIGGER = 16
@@ -54,38 +50,79 @@ def readDistance():
 
     return distance
 
-def distance():
-    count = 0
-    d = 0
-    for i in range(4):
+def distance(samples=100, delay=0.001):
+    ecount = 0
+    d = list()
+    for i in range(samples+2):
+        if len(d) == samples: break
+        time.sleep(delay)
         try:
-            d += readDistance()
-            count += 1
+            d.append(readDistance())
         except IOError:
-            pass
+            if ecount < 2:
+                ecount += 1
+                pass
+            else:
+                raise
 
-    if count < 2: raise IOError("Device error")
-    return d/count
+    return sum(d)/len(d)
+
+SPEED_UP = 8
+SPEED_DOWN = 8
+
+def moveTo(h):
+    for i in range(2):
+        d = distance()
+
+        if h > d:
+            t = (h - d)/SPEED_UP
+            moveUp(t)
+        else:
+            t = (d - h)/SPEED_DOWN
+            moveDown(t)
+
+def doCalibrate(t):
+    moveDown(t+2)
+    h1 = distance()
+    moveUp(t)
+    h2 = distance()
+    global SPEED_UP
+    SPEED_UP = (h2 - h1)/t
+    moveUp(2)
+    moveDown(t)
+    h1 = distance()
+    global SPEED_DOWN
+    SPEED_DOWN = (h2 - h1)/t
+
+def opAndRelease(op, arg):
+    op(arg)
+    global motionLock
+    motionLock.release()
+ 
+@route('/speed')
+def speed():
+    return '{up: %f, down: %f}' % (SPEED_UP, SPEED_DOWN)
+
+@route('/calibrate')
+def calibrate():
+    global motionLock
+    if not motionLock.acquire(False): abort(409)
+    thread.start_new_thread(opAndRelease, (doCalibrate, 5))
 
 @route('/height')
 def height():
     return '%f' % distance()
 
 @route('/height/<h>')
-def setheight(h):
+def height2(h):
     try:
         h = float(h)
     except ValueError:
         abort(400)
 
-    d = distance()
-
-    if h > d:
-        t = (h - d)/8
-        return "moving up %f" % t
-    else:
-        t = (d - h)/8
-        return "moving down %f" % t
+    global motionLock
+    if not motionLock.acquire(False): abort(409)
+    thread.start_new_thread(opAndRelease, (moveTo, h))
 
 @route('/up/<t>')
 def up(t):
@@ -96,7 +133,7 @@ def up(t):
 
     global motionLock
     if not motionLock.acquire(False): abort(409)
-    thread.start_new_thread(moveUp, (t,))
+    thread.start_new_thread(opAndRelease, (moveUp, t))
 
 @route('/down/<t>')
 def down(t):
@@ -107,7 +144,7 @@ def down(t):
 
     global motionLock
     if not motionLock.acquire(False): abort(409)
-    thread.start_new_thread(moveDown, (t,))
+    thread.start_new_thread(opAndRelease, (moveDown, t))
 
 @route('/')
 def server_static():
