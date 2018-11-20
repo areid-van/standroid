@@ -4,11 +4,13 @@ import thread
 import threading
 import time
 import os
+import json
 
 global docroot
 docroot = os.path.dirname(os.path.abspath(__file__)) + '/assets'
 
 def moveUp(t):
+    print("Move up %f"%t)
     GPIO.setup(3, GPIO.IN)
     GPIO.setup(5, GPIO.OUT)
     GPIO.output(5, 0)
@@ -16,6 +18,7 @@ def moveUp(t):
     GPIO.setup(5, GPIO.IN)
 
 def moveDown(t):
+    print("Move down %f"%t)
     GPIO.setup(3, GPIO.OUT)
     GPIO.output(3, 0)
     GPIO.setup(5, GPIO.OUT)
@@ -39,40 +42,47 @@ def readDistance():
 
     while GPIO.input(GPIO_ECHO) == 0:
         StartTime = time.time()
-        if StartTime - BeginTime > 0.1: raise IOError
+        if StartTime - BeginTime > 0.2: raise IOError
 
     while GPIO.input(GPIO_ECHO) == 1:
         StopTime = time.time()
-        if StopTime - BeginTime > 0.1: raise IOError
+        if StopTime - BeginTime > 0.2: raise IOError
 
     TimeElapsed = StopTime - StartTime
     distance = (TimeElapsed * 34300) / 2
 
     return distance
 
-def distance(samples=100, delay=0.001):
+def distance(samples=100, delay=0.01, retry=10):
     ecount = 0
     d = list()
-    for i in range(samples+2):
+    for i in range(samples+retry):
         if len(d) == samples: break
         time.sleep(delay)
         try:
             d.append(readDistance())
         except IOError:
-            if ecount < 2:
+            if ecount < retry:
                 ecount += 1
                 pass
             else:
                 raise
 
+    d = [x for x in d if 25 < x < 175]
+    x1 = len(d)//4
+    x2 = x1+len(d)//2
+    d = sorted(d)[x1:x2]
     return sum(d)/len(d)
 
-SPEED_UP = 8
-SPEED_DOWN = 8
+
+SPEED_UP = 4
+SPEED_DOWN = 4
 
 def moveTo(h):
+    print("move to %f"%h)
     for i in range(2):
         d = distance()
+        print("height %f"%d)
 
         if h > d:
             t = (h - d)/SPEED_UP
@@ -80,19 +90,27 @@ def moveTo(h):
         else:
             t = (d - h)/SPEED_DOWN
             moveDown(t)
+    print("final height %f"%distance())
 
 def doCalibrate(t):
     moveDown(t+2)
     h1 = distance()
+    print("h1 %f"%h1)
     moveUp(t)
     h2 = distance()
+    print("h2 %f"%h2)
     global SPEED_UP
     SPEED_UP = (h2 - h1)/t
     moveUp(2)
+    h2 = distance()
+    print("h2 %f"%h2)
     moveDown(t)
     h1 = distance()
+    print("h1 %f"%h1)
     global SPEED_DOWN
     SPEED_DOWN = (h2 - h1)/t
+    with open('standroid.json', 'w') as outfile:
+        json.dump([SPEED_UP, SPEED_DOWN], outfile)
 
 def opAndRelease(op, arg):
     op(arg)
@@ -161,6 +179,14 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 GPIO.setup(GPIO_TRIGGER, GPIO.OUT)
 GPIO.setup(GPIO_ECHO, GPIO.IN)
+
+try:
+    with open('standroid.json', 'r') as infile:
+        config = json.load(infile)
+        SPEED_UP = config[0]
+        SPEED_DOWN = config[1]
+except:
+    pass
 
 global motionLock
 motionLock = threading.Lock();
