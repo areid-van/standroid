@@ -20,13 +20,13 @@ allows me to plug this device into the desk without cutting any wires or doing
 damage. The circuit also leaves the manual switch functional when the computer
 control isn't engaged. My desk is a Jarvis.
 
-![Photo of a Jarvis desk like mine](photos/desk.jpg)
+![Photo of a Jarvis desk like mine](photos/desk.png)
 
 ![Photo of the relay unit and Raspberry Pi](photos/device.jpg)
 This is what the final device looks like (distance sensor not shown). This one
 uses an original Pi Model B. The relay board is enclosed in a plastic case.
 
-![Photo of connectors mated to factory connectors](photos/connectors.png)
+![Photo of connectors mated to factory connectors](photos/connectors.jpg)
 These are the power plugs mated to the factory connectors of the desk.
 
 ## Installing
