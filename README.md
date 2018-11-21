@@ -9,16 +9,25 @@ the trick. It's also fun to control your desk from a distance, or mess with
 your co-worker's desk.
 
 The app runs on a Raspberry Pi, any model will do. It requires you wire up a
-4 channel relay board and control it with the GPIO bus. I used a relay board
-from Sainsmart, but a bunch of vendors sell basically the same board. Easy to
-find one on Amazon. I've included the schematic. My desk had nice 5.5mmx2.5mm
+4 channel relay board and an ultrasonic distance sensor so you can control them
+with the GPIO bus. I used a relay board from Sainsmart, but a bunch of vendors
+sell basically the same board. The distance sensor is an HC-SR04 also from
+Sainsmart. Easy to find these on Amazon. I've included the schematic.
+My desk had nice 5.5mmx2.5mm
 power plugs on the supply, switch and motor, and I was able to find plugs that
 mate from Digikey. Wiring these up to the relays according to my schematic
 allows me to plug this device into the desk without cutting any wires or doing
 damage. The circuit also leaves the manual switch functional when the computer
 control isn't engaged. My desk is a Jarvis.
 
-![Photo of a Jarvis desk like mine](desk.png)
+![Photo of a Jarvis desk like mine](photos/desk.png)
+
+![Photo of the relay unit and Raspberry Pi](photos/device.png)
+This is what the final device looks like (distance sensor not shown). This one
+uses an original Pi Model B. The relay board is enclosed in a plastic case.
+
+![Photo of connectors mated to factory connectors](photos/connectors.png)
+These are the power plugs mated to the factory connectors of the desk.
 
 ## Installing
 
@@ -63,8 +72,3 @@ pull things like monitors off the desk when cables get tight. Too low can
 collide with items under the desk like PCs and chairs. Best make sure that the
 desk can operate through it's entire range. Be careful not to leave your 
 chair under the desk.
-
-## TODO
-The schematic now has a distance sensor included, but the App doesn't use that
-yet. The idea is to use a distance sensor to be able to control with absolute
-heights instead of just timing the motor operation.
